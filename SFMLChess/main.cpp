@@ -7,7 +7,7 @@ using namespace std;
 
 string getBestMove(int skill, string position, int movetime, string engine);
 void move(string mv, char color, string& turn, sf::Sound& sound, sf::SoundBuffer& mvSound, sf::SoundBuffer& capSound, sf::SoundBuffer& sigSound);
-void specialMoves(string move, char color);
+void specialMoves(string move);
 void intToMove(int x1, int y1, int x2, int y2, string& mv);
 void moveToInt(string mv, int& x1, int& y1, int& x2, int& y2);
 
@@ -227,11 +227,6 @@ string getBestMove(int skill, string position, int movetime, string engine)
         if (mv == "(non") return "checkmate";
         int x1, y1, x2, y2;
         moveToInt(mv, x1, y1, x2, y2);
-        if (((y2 == 0 || y2 == 7) && board[x1][y1] == 'P') ||
-            ((y2 == 0 || y2 == 7) && board[x1][y1] == 'p'))
-        {
-            mv += 'q';
-        }
         if ((aicolor == 'b' && islower(board[x1][y1])) || (aicolor == 'w' && isupper(board[x1][y1]))) return mv;
         else return "err";
     }
@@ -243,15 +238,22 @@ string getBestMove(int skill, string position, int movetime, string engine)
 
 void move(string mv, char color, string& turn, sf::Sound& sound, sf::SoundBuffer& mvSound, sf::SoundBuffer& capSound, sf::SoundBuffer& sigSound)
 {
-    string testMove = getBestMove(20, position + " " + mv, 100, engine);
-    if (testMove == "err" && turn == "player") return;
-
     int x1, y1, x2, y2;
     moveToInt(mv, x1, y1, x2, y2);
 
+    //check for promotion
+    if (((y2 == 0 || y2 == 7) && board[x1][y1] == 'P') ||
+        ((y2 == 0 || y2 == 7) && board[x1][y1] == 'p'))
+    {
+        mv += 'q';
+    }
+
+    string testMove = getBestMove(20, position + " " + mv, 100, engine);
+    if (testMove == "err" && turn == "player") return;
+
     cout << mv << " ";
     position += " " + mv;
-    specialMoves(mv, color);
+    specialMoves(mv);
 
     if (board[x2][y2] == '0')
     {
@@ -282,17 +284,22 @@ void move(string mv, char color, string& turn, sf::Sound& sound, sf::SoundBuffer
     board[x1][y1] = '0';
 }
 
-void specialMoves(string move, char color)
+void specialMoves(string move)
 {
     int x1, y1, x2, y2;
     moveToInt(move, x1, y1, x2, y2);
+
+    char color = ' ';
+    if (islower(board[x1][y1])) color = 'b';
+    else if (isupper(board[x1][y1])) color = 'w';
 
     char test1 = tolower(board[x1][y1]);
     char test2 = tolower(board[x2][y2]);
 
     if ((y2 == 0 || y2 == 7) && test1 == 'p') //promotion
     {
-        board[x1][y1] = 'q';
+        if (color == 'b') board[x1][y1] = 'q';
+        else if (color == 'w') board[x1][y1] = 'Q';
     }
     else if ((move == "e8g8" || move == "e1g1") && test1 == 'k') //short castling
     {
